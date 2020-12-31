@@ -18,12 +18,36 @@ app.get("/checkjwt", (req, res) => {
 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
+
   try {
-    //testing communication to frontend
-    const testquery = await pool.query(
-      "SELECT movie_list_json FROM movie_list WHERE user_id='e6632b42-75ad-4f58-b125-2f4e540c9522' ORDER BY modified_date DESC LIMIT 1"
+    // check if user_email typo/ not even exists
+    const user = await pool.query("SELECT * FROM users WHERE user_email = $1", [
+      email,
+    ]);
+
+    if (!user.rows.length) {
+      return res.status(401).json({ error: "Wrong username" });
+    }
+
+    //check if password is correct
+    const isValidPassword = await bcrypt.compare(
+      password,
+      user.rows[0].user_password
     );
-    res.json(testquery.rows[0].movie_list_json);
+
+    if (!isValidPassword) {
+      return res.status(401).json({ error: "Wrong password" });
+    }
+
+    //get his/her movieList
+    const movieList = await pool.query(
+      "SELECT movie_list_json FROM movie_list WHERE user_id= $1 ORDER BY modified_date DESC LIMIT 1",
+      [user.rows[0].user_id]
+    );
+
+    const userList = await movieList.rows[0].movie_list_json;
+
+    res.json(userList);
   } catch (error) {
     console.log(error);
   }
@@ -41,15 +65,16 @@ app.post("/register", async (req, res) => {
     if (user.rows.length) {
       return res.status(401).json({ error: "User already exists" });
     }
-    //creates new user account and his/her empty movieList
+    //creates new user account
     const saltRounds = 10;
     const hashPassword = await bcrypt.hash(password, saltRounds);
 
-    let newUser = await pool.query(
+    const newUser = await pool.query(
       "INSERT INTO users ( user_email, user_password ) VALUES ($1, $2) RETURNING *",
       [email, hashPassword]
     );
 
+    //creates his/her empty movieList
     await pool.query(
       "INSERT INTO movie_list (movie_list_json, user_id) VALUES ($1, (SELECT user_id from users WHERE user_id = $2 ))",
       ["[]", newUser.rows[0].user_id]

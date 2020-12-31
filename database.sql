@@ -26,7 +26,7 @@ INSERT INTO movie_list (
     movie_list_json, user_id
 ) VALUES (
     '[{"id":123123,"watched":true},{"id":123456,"watched":false}]',
-    (SELECT user_id from users WHERE user_id='e6632b42-75ad-4f58-b125-2f4e540c9522')
+    (SELECT user_id from users WHERE user_id='9c258b0d-d0a2-4e61-a79a-55cf03bb1281')
 );
 
 --read last record
