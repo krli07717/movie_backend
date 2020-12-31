@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const pool = require("./db");
+const bcrypt = require("bcrypt");
 const port = 5000;
 
 app.use(cors());
@@ -30,9 +31,35 @@ app.post("/login", async (req, res) => {
 
 app.post("/register", async (req, res) => {
   const { email, password } = req.body;
-  //check if user already exists
 
-  res.json(true);
+  try {
+    //check if user already exists
+    const user = await pool.query("SELECT * FROM users WHERE user_email = $1", [
+      email,
+    ]);
+
+    if (user.rows.length) {
+      return res.status(401).json({ error: "User already exists" });
+    }
+    //creates new user account and his/her empty movieList
+    const saltRounds = 10;
+    const hashPassword = await bcrypt.hash(password, saltRounds);
+
+    let newUser = await pool.query(
+      "INSERT INTO users ( user_email, user_password ) VALUES ($1, $2) RETURNING *",
+      [email, hashPassword]
+    );
+
+    await pool.query(
+      "INSERT INTO movie_list (movie_list_json, user_id) VALUES ($1, (SELECT user_id from users WHERE user_id = $2 ))",
+      ["[]", newUser.rows[0].user_id]
+    );
+
+    return res.json({ message: "successful registration" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json("Server error");
+  }
 });
 
 app.listen(port, () => {
