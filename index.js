@@ -39,17 +39,36 @@ app.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Wrong password" });
     }
 
-    //get his/her movieList
+    //get his/her movieList //wait
+    //get his/her user_id bc List won't work
     const movieList = await pool.query(
       "SELECT movie_list_json FROM movie_list WHERE user_id= $1 ORDER BY modified_date DESC LIMIT 1",
       [user.rows[0].user_id]
     );
 
-    const userList = await movieList.rows[0].movie_list_json;
+    const userList = await JSON.parse(movieList.rows[0].movie_list_json);
 
-    res.json(userList);
+    res.json({
+      userId: user.rows[0].user_id,
+      movieList: userList,
+    });
   } catch (error) {
     console.log(error);
+  }
+});
+
+app.post("/getlist", async (req, res) => {
+  const { userId } = req.body;
+
+  try {
+    const movieList = await pool.query(
+      "SELECT movie_list_json FROM movie_list WHERE user_id= $1 ORDER BY modified_date DESC LIMIT 1",
+      [userId]
+    );
+    return res.json(movieList.rows[0].movie_list_json);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json("Server error");
   }
 });
 
@@ -80,7 +99,10 @@ app.post("/register", async (req, res) => {
       ["[]", newUser.rows[0].user_id]
     );
 
-    return res.json({ message: "successful registration" });
+    return res.json({
+      userId: newUser.rows[0].user_id,
+      message: "successful registration",
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json("Server error");
