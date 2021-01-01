@@ -39,18 +39,17 @@ app.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Wrong password" });
     }
 
-    //get his/her movieList //wait
-    //get his/her user_id bc List won't work
-    const movieList = await pool.query(
-      "SELECT movie_list_json FROM movie_list WHERE user_id= $1 ORDER BY modified_date DESC LIMIT 1",
-      [user.rows[0].user_id]
-    );
+    //get his/her user_id bc List won't work with async useReducer at Frontend
+    // const movieList = await pool.query(
+    //   "SELECT movie_list_json FROM movie_list WHERE user_id= $1 ORDER BY modified_date DESC LIMIT 1",
+    //   [user.rows[0].user_id]
+    // );
 
-    const userList = await JSON.parse(movieList.rows[0].movie_list_json);
+    // const userList = await JSON.parse(movieList.rows[0].movie_list_json);
 
     res.json({
       userId: user.rows[0].user_id,
-      movieList: userList,
+      // movieList: userList,
     });
   } catch (error) {
     console.log(error);
@@ -66,6 +65,21 @@ app.post("/getlist", async (req, res) => {
       [userId]
     );
     return res.json(movieList.rows[0].movie_list_json);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json("Server error");
+  }
+});
+
+app.put("/updatedb", async (req, res) => {
+  const { userId, MovieList } = req.body;
+  try {
+    const new_list_json = JSON.stringify(MovieList);
+    await pool.query(
+      "UPDATE movie_list SET movie_list_json = $1 WHERE user_id = $2",
+      [new_list_json, userId]
+    );
+    res.json("updated from backend");
   } catch (error) {
     console.log(error);
     res.status(500).json("Server error");
