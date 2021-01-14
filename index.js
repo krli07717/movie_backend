@@ -9,7 +9,7 @@ if (port == null || port == "") {
 }
 app.use(
   cors({
-    origin: "https://movie-app-717.herokuapp.com/",
+    origin: "https://movie-app-717.herokuapp.com",
     methods: "GET,PUT,POST",
     credentials: true,
   })
