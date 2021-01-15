@@ -82,6 +82,7 @@ router.post("/register", async (req, res) => {
     );
 
     //giving jwt token
+    //will not work between *.herokuapp.com apps because https://devcenter.heroku.com/articles/cookies-and-herokuapp-com
     const jwtToken = jwtGenerator(newUser.rows[0].user_id);
 
     return res
