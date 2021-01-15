@@ -90,7 +90,7 @@ router.post("/register", async (req, res) => {
         path: "/",
         maxAge: 43200000,
         httpOnly: true,
-        //   secure: true,
+        secure: true,
       })
       .json({
         userId: newUser.rows[0].user_id,
