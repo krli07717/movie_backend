@@ -1,4 +1,4 @@
-require("dotenv").config();
+// require("dotenv").config();
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
@@ -82,6 +82,7 @@ router.post("/register", async (req, res) => {
     );
 
     //giving jwt token
+    //will not work between *.herokuapp.com apps because https://devcenter.heroku.com/articles/cookies-and-herokuapp-com
     const jwtToken = jwtGenerator(newUser.rows[0].user_id);
 
     return res
@@ -90,7 +91,7 @@ router.post("/register", async (req, res) => {
         path: "/",
         maxAge: 43200000,
         httpOnly: true,
-        //   secure: true,
+        secure: true,
       })
       .json({
         userId: newUser.rows[0].user_id,
